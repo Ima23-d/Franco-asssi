@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente Virtual</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #000000;
+            color: white;
+        }
+
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: absolute;
+            top: 20px;
+        }
+
+        .franco {
+            font-weight: bold;
+            font-size: 24px;
+            color: white;
+            margin-right: 20px;
+        }
+
+        #menu-btn {
+            padding: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #menu-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .container {
+            text-align: center;
+            background: #000000;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            margin-top: 80px;
+        }
+
+        #response {
+            margin-top: 20px;
+            color: white;
+        }
+
+        #response-text {
+            font-size: 18px;
+            color: white;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .mic {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        #input-text {
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 300px;
+            margin-top: 10px;
+            color: rgb(255, 255, 255);
+            background-color: black;
+            border-color: white;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px; /* Espaçamento entre os botões */
+            margin-top: 10px;
+        }
+
+        #start-btn, #send-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            transition: background-color 0.3s;
+            height: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        #start-btn {
+            background-color: #007bff;
+        }
+
+        #start-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #send-btn {
+            background-color: #28a745;
+        }
+
+        #send-btn:hover {
+            background-color: #218838;
+        }
+
+        /* Estilos do carregador */
+        .loading {
+            background-color: rgba(255, 0, 0, 0);
+            align-items: center;
+            justify-content: center;
+            display: flex;
+            height: 100px; /* Ajuste conforme necessário */
+        }
+
+        .loading div {
+            background-color: blue;
+            width: 20px;
+            height: 20px;
+            margin: 20px;
+            border-radius: 50%;
+            animation-name: load912355;
+            animation-duration: .9s;
+            animation-iteration-count: infinite;
+            animation-direction: alternate;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .loading .a {
+            animation-delay: .3s;
+        }
+
+        .loading .u {
+            animation-delay: .6s;
+        }
+
+        @keyframes load912355 {
+            0% {
+                transform: translateY(50px) scale(1);
+            }
+
+            100% {
+                transform: translateY(10px) scale(1.8) rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .original-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="franco">Franco</h1>
+        <button id="menu-btn">Menu</button>
+    </div>
+    <div class="container">
+        <img id="main-image" class="original-image" src="fb2b86e510ec0be6e5f4b3912a5c376c.gif" alt="">
+        <div id="loader" class="hidden loading">
+            <div class="a"></div>
+            <div class="u"></div>
+            <div class="a"></div>
+        </div>
+        <div id="response" class="text">
+            <p id="response-text">Clique no botão e fale algo...</p>
+        </div>
+        <input type="text" id="input-text" placeholder="Digite sua pergunta aqui...">
+        <div class="button-container">
+            <button id="start-btn">
+                <img src="mic.webp" alt="" class="mic"> Falar
+            </button>
+            <button id="send-btn">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        let recognition;
+        let synth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        function startRecognition() {
+            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                alert('Seu navegador não suporta reconhecimento de voz.');
+                return;
+            }
+
+            // Mostrar o carregador
+            document.getElementById('main-image').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+
+            recognition.onresult = async (event) => {
+                const query = event.results[0][0].transcript;
+                processQuery(query);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erro no reconhecimento de voz:', event.error);
+                alert('Erro no reconhecimento de voz: ' + event.error);
+                // Ocultar o carregador e mostrar a imagem original em caso de erro
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('main-image').classList.remove('hidden');
+            };
+
+            recognition.onend = () => {
+                // Ocultar o carregador e mostrar a imagem original quando o reconhecimento parar
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('main-image').classList.remove('hidden');
+            };
+
+            recognition.start();
+        }
+
+        function processQuery(query) {
+            const responseTextElement = document.getElementById('response-text');
+            responseTextElement.innerText = `Você perguntou: ${query}`;
+
+            fetch(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    let responseText;
+                    if (data && data.extract) {
+                        responseText = data.extract;
+                    } else {
+                        responseText = 'Desculpe, não encontrei uma resposta.';
+                    }
+                    responseTextElement.innerText = responseText;
+
+                    if (currentUtterance) {
+                        synth.cancel();
+                    }
+                    currentUtterance = new SpeechSynthesisUtterance(responseText);
+                    currentUtterance.lang = 'pt-BR';
+                    synth.speak(currentUtterance);
+
+                    // Armazenar a pergunta e resposta no histórico
+                    let history = JSON.parse(localStorage.getItem('history')) || [];
+                    history.push({ query, responseText });
+                    localStorage.setItem('history', JSON.stringify(history));
+                })
+                .catch(error => {
+                    console.error('Erro ao buscar dados:', error);
+                    responseTextElement.innerText = 'Desculpe, ocorreu um erro ao buscar a resposta.';
+                });
+        }
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            if (recognition) {
+                recognition.stop();
+                recognition = null;
+            } else {
+                startRecognition();
+            }
+        });
+
+        document.getElementById('send-btn').addEventListener('click', () => {
+            const inputText = document.getElementById('input-text').value.trim();
+            if (inputText) {
+                processQuery(inputText);
+                document.getElementById('input-text').value = ''; // Limpar a caixa de texto
+            } else {
+                alert('Por favor, digite uma pergunta.');
+            }
+        });
+
+        document.getElementById('menu-btn').addEventListener('click', () => {
+            window.location.href = 'history.html';
+        });
+    </script>
+</body>
+</html>

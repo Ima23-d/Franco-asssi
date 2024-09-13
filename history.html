@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Perguntas</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000000;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .back-btn, .clear-btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 20px;
+            margin-right: 10px;
+        }
+
+        .back-btn:hover, .clear-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .clear-btn {
+            background-color: #dc3545; /* Cor vermelha para o botão de limpar */
+        }
+
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+
+        .history-item {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .history-item p {
+            margin: 5px 0;
+        }
+
+        .history-item .query {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-btn" onclick="window.location.href='index.html'">Voltar</button>
+        <button class="clear-btn" id="clear-btn">Limpar Histórico</button>
+        <h1>Histórico de Perguntas</h1>
+        <div id="history"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const historyContainer = document.getElementById('history');
+            const clearBtn = document.getElementById('clear-btn');
+            let history = JSON.parse(localStorage.getItem('history')) || [];
+
+            function renderHistory() {
+                historyContainer.innerHTML = '';
+                if (history.length === 0) {
+                    historyContainer.innerHTML = '<p>Sem histórico de perguntas.</p>';
+                    return;
+                }
+
+                history.forEach(item => {
+                    const historyItem = document.createElement('div');
+                    historyItem.classList.add('history-item');
+                    historyItem.innerHTML = `
+                        <p class="query">Pergunta: ${item.query}</p>
+                        <p>Resposta: ${item.responseText}</p>
+                    `;
+                    historyContainer.appendChild(historyItem);
+                });
+            }
+
+            renderHistory();
+
+            clearBtn.addEventListener('click', () => {
+                if (confirm('Tem certeza de que deseja limpar o histórico?')) {
+                    localStorage.removeItem('history');
+                    history = [];
+                    renderHistory();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
